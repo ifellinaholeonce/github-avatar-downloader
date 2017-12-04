@@ -1,8 +1,15 @@
+//Put keys from .env to process.env. Input your key to .env in your directory as GITHUB_KEY = yourkey
+require('dotenv').config();
+
 var request = require('request');
 var fs = require('fs');
-var GITHUB_TOKEN = require('./secrets.js').GITHUB_TOKEN;
+
+//Github key
+var GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+
 var repoOwner = process.argv[2];
 var repoName = process.argv[3];
+
 
 //Make command line repoOwner and repoName mandatory
 var checkArguments = function (repoOwner, repoName) {
@@ -17,8 +24,6 @@ var checkArguments = function (repoOwner, repoName) {
   }
   return true;
 };
-
-
 
 //HTTP request
 var getRepoContributors = function(repoOwner, repoName, callback) {
@@ -38,6 +43,18 @@ var getRepoContributors = function(repoOwner, repoName, callback) {
   });
 };
 
+//Take the avatar URL from the request and save to filepath
+var downloadImageByUrl = function(url, filePath) {
+  request(url)
+    .on('error', function(err) {
+      console.log("There was an error", err);
+    })
+    .on('response', function (res) {
+      console.log(url, res.statusCode, res.statusMessage);
+    })
+    .pipe(fs.createWriteStream(filePath)); //Save the actual file to disc
+};
+
 //Initiate the request function and set the callback function to handle the response
   //Run the check against the inputs
 if (checkArguments(repoOwner, repoName)) {
@@ -52,15 +69,3 @@ if (checkArguments(repoOwner, repoName)) {
     });
   });
 }
-//Take the avatar URL from the request and save to filepath
-var downloadImageByUrl = function(url, filePath) {
-  request(url)
-    .on('error', function(err) {
-      console.log("There was an error", err);
-    })
-    .on('response', function (res) {
-      console.log(url, res.statusCode, res.statusMessage);
-    })
-    .pipe(fs.createWriteStream(filePath)); //Save the actual file to disc
-};
-
