@@ -1,4 +1,5 @@
 var request = require('request');
+var fs = require('fs');
 var GITHUB_TOKEN = require('./secrets.js').GITHUB_TOKEN;
 
 
@@ -22,6 +23,18 @@ getRepoContributors("jquery", "jquery", function(err, res) {
     console.log("Errors:", err);
   }
   res.forEach(function(user) {
-    console.log("Avatar:", user.avatar_url);
+    console.log(user.login, user.avatar_url);
   });
 });
+
+var downloadImageByUrl = function(url, filePath) {
+  request(url)
+    .on('error', function(err) {
+      console.log("There was an error", err);
+    })
+    .on('response', function (res) {
+      console.log(res.statusCode, res.statusMessage);
+    })
+    .pipe(fs.createWriteStream(filePath));
+};
+
