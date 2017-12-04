@@ -8,7 +8,7 @@ var getRepoContributors = function(repoOwner, repoName, callback) {
     url: `https://api.github.com/repos/${repoOwner}/${repoName}/contributors`,
     headers: {
       'User-Agent': 'request',
-      'Authorization': 'token ' + GITHUB_TOKEN
+      'Authorization': `token ${GITHUB_TOKEN}`
     }
 };
 
@@ -23,7 +23,8 @@ getRepoContributors("jquery", "jquery", function(err, res) {
     console.log("Errors:", err);
   }
   res.forEach(function(user) {
-    console.log(user.login, user.avatar_url);
+    console.log("Downloading:", user.login, user.avatar_url);
+    downloadImageByUrl(user.avatar_url, `./avatars/${user.login}`);
   });
 });
 
@@ -33,7 +34,7 @@ var downloadImageByUrl = function(url, filePath) {
       console.log("There was an error", err);
     })
     .on('response', function (res) {
-      console.log(res.statusCode, res.statusMessage);
+      console.log(url, res.statusCode, res.statusMessage);
     })
     .pipe(fs.createWriteStream(filePath));
 };
