@@ -1,6 +1,8 @@
 var request = require('request');
 var fs = require('fs');
 var GITHUB_TOKEN = require('./secrets.js').GITHUB_TOKEN;
+var repoOwner = process.argv[2];
+var repoName = process.argv[3];
 
 
 var getRepoContributors = function(repoOwner, repoName, callback) {
@@ -18,7 +20,7 @@ var getRepoContributors = function(repoOwner, repoName, callback) {
   });
 };
 
-getRepoContributors("jquery", "jquery", function(err, res) {
+getRepoContributors(repoOwner, repoName, function(err, res) {
   if (err) {
     console.log("Errors:", err);
   }
