@@ -8,15 +8,17 @@ var repoName = process.argv[3];
 var checkArguments = function (repoOwner, repoName) {
   if (repoOwner === undefined || repoOwner === '' || repoOwner === ' ') {
     console.log("Please input a Repo Owner");
+    return false;
   }
 
   if (repoName === undefined || repoName === '' || repoName === ' ') {
     console.log("Please input a Repo Name");
+    return false;
   }
+  return true;
 };
 
-//Run the check against the inputs
-checkArguments(repoOwner, repoName);
+
 
 //HTTP request
 var getRepoContributors = function(repoOwner, repoName, callback) {
@@ -37,17 +39,19 @@ var getRepoContributors = function(repoOwner, repoName, callback) {
 };
 
 //Initiate the request function and set the callback function to handle the response
-getRepoContributors(repoOwner, repoName, function(err, res) {
-  if (err) {
-    console.log("Errors:", err);
-  }
-  res.forEach(function(user) {
-    console.log("Downloading:", user.login, user.avatar_url);
-    //Download avatars to directory /avatars/ and name each file the user login
-    downloadImageByUrl(user.avatar_url, `./avatars/${user.login}`);
+  //Run the check against the inputs
+if (checkArguments(repoOwner, repoName)) {
+  getRepoContributors(repoOwner, repoName, function(err, res) {
+    if (err) {
+      console.log("Errors:", err);
+    }
+    res.forEach(function(user) {
+      console.log("Downloading:", user.login, user.avatar_url);
+      //Download avatars to directory /avatars/ and name each file the user login
+      downloadImageByUrl(user.avatar_url, `./avatars/${user.login}`);
+    });
   });
-});
-
+}
 //Take the avatar URL from the request and save to filepath
 var downloadImageByUrl = function(url, filePath) {
   request(url)
