@@ -3,7 +3,6 @@ require('dotenv').config();
 
 var request = require('request');
 var fs = require('fs');
-var path = require('path');
 
 //Github key
 var GITHUB_TOKEN = process.env.GITHUB_TOKEN;
@@ -23,10 +22,15 @@ var getRepoContributors = function(repoOwner, repoName, callback) {
       'Authorization': `token ${GITHUB_TOKEN}`
     }
   };
-
   //Make the request call
   request(options, function(err, res, body) {
     body = JSON.parse(body);
+    console.log(res.statusCode);
+    if (res.statusCode === 401) {
+      throw new Error("Your GITHUB_TOKEN key is incorrect");
+    } else if (res.statusCode === 404) {
+      throw new Error("That Github does not exist"); //TODO - check if it is the repoOwner or the repoName that is wrong.
+    }
     callback(err, body);
   });
 };
@@ -35,7 +39,7 @@ var getRepoContributors = function(repoOwner, repoName, callback) {
 var downloadImageByUrl = function(url, filePath) {
   request(url)
     .on('error', function(err) {
-      console.log("There was an error", err);
+      throw err;
     })
     .on('response', function (res) {
       console.log(url, res.statusCode, res.statusMessage);
@@ -45,8 +49,9 @@ var downloadImageByUrl = function(url, filePath) {
 
 //Make command line repoOwner and repoName mandatory
 var checkArguments = function (repoOwner, repoName) {
-  if (process.argv.length > 4 || process.argv < 4) {
-    throw new Error('Inappropriate number of arguments. Please input Repo Name and Owner Name');
+  if (process.argv.length !== 4) {
+    console.log('Inappropriate number of arguments. Please input Repo Name and Owner Name');
+    return false;
   }
 
   if (repoOwner === undefined || repoOwner === '' || repoOwner === ' ') {
@@ -61,11 +66,19 @@ var checkArguments = function (repoOwner, repoName) {
   return true;
 };
 
-//Check the .env file is present in root folder and check that GITHUB_TOKEN exists inside it
+//Check the .env file is present in root folder and check that GITHUB_TOKEN exists inside
 var checkEnv = function () {
   fs.access('./.env', function (err) {
     if (err && err.code === 'ENOENT') {
       throw new Error('.env file cannot be found. Ensure .env is in the project root folder');
+    } else {
+      fs.readFile('./.env', 'utf8', function(err, data){
+        if (err) {
+          throw err;
+        } else if (!data.match(/GITHUB_TOKEN=(.+)\b/, "$1")) {
+          throw new Error("./.env GITHUB_TOKEN is missing");
+        }
+      });
     }
   });
   return true;
@@ -86,13 +99,13 @@ if (checkArguments(repoOwner, repoName) && checkEnv()) {
   checkDir('./avatars');
   getRepoContributors(repoOwner, repoName, function(err, res) {
     if (err) {
-      console.log("Errors:", err);
-    }
+      throw err;
+    } else {
       res.forEach(function(user) {
         console.log("Downloading:", user.login, user.avatar_url);
         //Download avatars to directory /avatars/ and name each file the user login
         downloadImageByUrl(user.avatar_url, `./avatars/${user.login}`);
       });
     }
-  );
+  });
 }
